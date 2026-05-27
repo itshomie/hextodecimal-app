@@ -1,0 +1,15 @@
+{
+  "name": "hextodecimal-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static SEO converter website for HexToDecimal.app.",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build-site.mjs",
+    "dev": "npm run build && npx serve dist -l 4173",
+    "check": "npm run build && node scripts/check-site.mjs"
+  },
+  "devDependencies": {
+    "serve": "^14.2.5"
+  }
+}
