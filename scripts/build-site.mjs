@@ -310,6 +310,7 @@ async function main() {
   await mkdir(path.join(dist, "assets"), { recursive: true });
   await cp(path.join(root, "src/assets/styles.css"), path.join(dist, "assets/styles.css"));
   await cp(path.join(root, "src/assets/converter.js"), path.join(dist, "assets/converter.js"));
+  await cp(path.join(root, "src/assets/favicon.svg"), path.join(dist, "assets/favicon.svg"));
 
   for (const page of pages) {
     await writePage(page.slug, renderConverterPage(page));
@@ -664,6 +665,9 @@ function layout({ title, description, canonical, body, page }) {
   <meta property="og:url" content="${canonical}">
   <meta property="og:site_name" content="HexToDecimal.app">
   <meta name="twitter:card" content="summary">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="shortcut icon" href="/assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/assets/styles.css">
   ${schema}
 </head>
