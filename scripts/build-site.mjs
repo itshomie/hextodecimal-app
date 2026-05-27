@@ -4,7 +4,7 @@ import path from "node:path";
 const root = process.cwd();
 const dist = path.join(root, "dist");
 const siteUrl = "https://hextodecimal.app";
-const supportEmail = "support@hextodecimal.app";
+const supportEmail = "<!--email_off-->support@hextodecimal.app<!--/email_off-->";
 
 const pages = [
   {
