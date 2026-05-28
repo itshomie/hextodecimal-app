@@ -4,6 +4,7 @@ import path from "node:path";
 const root = process.cwd();
 const dist = path.join(root, "dist");
 const siteUrl = "https://hextodecimal.app";
+const lastModified = "2026-05-28";
 const supportEmail = "<!--email_off-->support@hextodecimal.app<!--/email_off-->";
 
 const pages = [
@@ -44,7 +45,7 @@ const pages = [
     keyword: "decimal to hex",
     title: "Decimal to Hex Converter - Base 10 to Hexadecimal",
     description:
-      "Convert decimal integers to hexadecimal notation in your browser, including large values, negative values, and multi-line batches.",
+      "Use this decimal to hex converter to create hexadecimal notation in your browser, including large values, negative values, and multi-line batches.",
     tool: "decimal-to-hex",
     inputLabel: "Decimal input",
     outputLabel: "Hexadecimal output",
@@ -112,7 +113,7 @@ const pages = [
     keyword: "hex to binary",
     title: "Hex to Binary Converter - Base 16 to Base 2",
     description:
-      "Convert hexadecimal values to binary with precise validation, multi-value input, and examples for programming and networking work.",
+      "Use this hex to binary converter to expand hexadecimal values into base-2 output with validation, batch input, and programming examples.",
     tool: "hex-to-binary",
     inputLabel: "Hex input",
     outputLabel: "Binary output",
@@ -160,7 +161,7 @@ const pages = [
     keyword: "hex to ascii",
     title: "Hex to ASCII Converter - Decode Hex Bytes to Text",
     description:
-      "Decode hexadecimal byte strings into readable ASCII or UTF-8 text with validation for byte pairs and spacing.",
+      "Use this hex to ASCII converter to decode hexadecimal byte strings into readable ASCII or UTF-8 text with byte-pair validation.",
     tool: "hex-to-ascii",
     inputLabel: "Hex byte input",
     outputLabel: "Decoded text",
@@ -226,7 +227,7 @@ const pages = [
     keyword: "binary calculator",
     title: "Binary Calculator - Add, Subtract, Multiply, and Divide Binary",
     description:
-      "Run binary arithmetic instantly in the browser and see binary, decimal, and hexadecimal results for each operation.",
+      "Use this binary calculator to run binary arithmetic in the browser and see binary, decimal, and hexadecimal results for each operation.",
     tool: "binary-calculator",
     inputLabel: "First binary value",
     outputLabel: "Calculation result",
@@ -299,11 +300,807 @@ const relatedFor = (page) =>
     .filter((item) => item.href !== (page.slug ? `/${page.slug}/` : "/"))
     .slice(0, 6);
 
-const commonUseCases = [
-  "checking values copied from logs, packet captures, device dashboards, and developer consoles",
-  "confirming examples before publishing documentation, homework, tickets, or runbooks",
-  "translating compact machine-friendly notation into a form that is easier to discuss with another person"
-];
+const pageGuides = {
+  "hex-to-decimal": {
+    introHeading: "Hex values are compact, but decimal is easier to discuss",
+    intro: [
+      "The hex to decimal page is built for the moment when a value such as a byte, color component, address offset, register value, or error code needs to be read in base 10. Hexadecimal is efficient for machines and programmers, but decimal is the format most reports, spreadsheets, tickets, and classroom answers expect.",
+      "Use this page when the source value is already hexadecimal and the next step is a plain decimal integer. The converter accepts common developer notation such as uppercase letters, lowercase letters, and optional 0x prefixes, then returns one decimal result per input value."
+    ],
+    stepsHeading: "How to convert hex to decimal cleanly",
+    steps: [
+      "Paste one hexadecimal value, or paste several values separated by spaces, commas, or line breaks.",
+      "Keep only the digits 0-9 and letters A-F unless the value uses the supported 0x prefix.",
+      "Read the decimal output line by line, keeping the same order as the original input.",
+      "Copy the result only after checking that the direction is hex to decimal, not decimal to hex.",
+      "If the source value is a fixed-width signed integer, decide the bit width before interpreting the sign."
+    ],
+    examplesHeading: "Hex to decimal examples",
+    examples: [
+      ["FF", "255", "Maximum value of an unsigned 8-bit byte."],
+      ["0x2A", "42", "A common code example using the 0x prefix."],
+      ["7FFFFFFF", "2147483647", "Largest positive signed 32-bit integer."]
+    ],
+    validationHeading: "Input rules for this page",
+    validation: [
+      "A valid hexadecimal integer uses base-16 digits. The letters A through F represent decimal values 10 through 15, so a value like 2A is not two decimal digits; it is two base-16 positions. The converter validates those symbols before calculating the result.",
+      "Separators are treated as boundaries between separate values. If you paste labels, comments, colons, quotes, or units, remove them first. The page reports invalid input instead of silently guessing because a single unexpected character can change the meaning of a low-level value."
+    ],
+    formulaHeading: "How the math works",
+    formula: [
+      "Hexadecimal is positional. In FF, the right F means 15 ones and the left F means 15 sixteens, so the total is 15 x 16 + 15 = 255. The same pattern scales to longer values: each step to the left multiplies the place value by another 16.",
+      "The converter uses integer arithmetic rather than floating-point rounding, which matters for long identifiers and high memory addresses. Very large inputs are displayed as full decimal integers so every digit remains visible."
+    ],
+    useCasesHeading: "Good uses for hex to decimal",
+    useCases: [
+      "Turning log values into numbers that are easier for non-specialists to compare.",
+      "Checking byte, register, and mask examples before adding them to documentation.",
+      "Converting database or API identifiers that are stored in compact base-16 form.",
+      "Verifying classroom and certification exercises that ask for a base-10 answer."
+    ],
+    accuracy: [
+      "Hex to decimal conversion does not decide signedness by itself. The visible value FF can be 255 as an unsigned byte or -1 in an 8-bit two's-complement context. This page returns the mathematical integer unless you explicitly include a minus sign.",
+      "If your destination system expects a prefix or a fixed width, add that formatting after conversion. Decimal output normally does not use leading zeroes, but technical tables sometimes require a fixed number of digits for alignment."
+    ],
+    faq: [
+      ["Does the converter support 0x prefixes?", "Yes. Values such as 0xFF and FF produce the same decimal result."],
+      ["Can I paste more than one hex value?", "Yes. Separate values with spaces, commas, semicolons, or line breaks."],
+      ["Why does FF return 255 instead of -1?", "The page returns the unsigned mathematical value. Signed interpretation requires a bit width, such as 8, 16, or 32 bits."]
+    ]
+  },
+  "binary-to-decimal": {
+    introHeading: "Read a bit pattern as an ordinary decimal number",
+    intro: [
+      "The binary to decimal page is for bit strings that need to be explained in everyday base 10. Binary is exact for switches, flags, and digital logic, but decimal is easier to compare when writing notes, checking homework, or discussing a value with someone who is not reading raw bits.",
+      "This converter keeps the task narrow: enter binary digits, optionally with a 0b prefix, and get the decimal integer. It is useful for short classroom values as well as longer bit patterns copied from firmware notes, networking material, or programming examples."
+    ],
+    stepsHeading: "How to convert binary to decimal",
+    steps: [
+      "Paste the binary value using only 0 and 1, or keep a supported 0b prefix if the value came from code.",
+      "Use a new line when converting several bit strings so each decimal result stays aligned with its source.",
+      "Check the output for the sample value first if you are teaching or documenting the process.",
+      "Remove spaces inside a single binary number unless those spaces are intended to separate multiple values.",
+      "Decide whether the source is unsigned or two's-complement before treating the result as signed."
+    ],
+    examplesHeading: "Binary to decimal examples",
+    examples: [
+      ["1010", "10", "A simple four-bit classroom example."],
+      ["11111111", "255", "Eight set bits in an unsigned byte."],
+      ["0b100000", "32", "A power-of-two value written with a code prefix."]
+    ],
+    validationHeading: "Binary input rules",
+    validation: [
+      "Binary values only contain 0 and 1. Digits such as 2 or 9 are valid decimal digits, but they are not valid binary digits, so the page rejects them. That helps catch accidental pastes from a decimal or hexadecimal source.",
+      "Grouping can be useful for humans, but this page treats separators as boundaries between values. If you want 1111 0000 to mean one byte, paste it as 11110000. If you leave the space, the converter treats it as two separate values."
+    ],
+    formulaHeading: "How the decimal value is built",
+    formula: [
+      "Each binary position is a power of two. In 1010, the leftmost 1 contributes 8, the next 0 contributes nothing, the next 1 contributes 2, and the final 0 contributes nothing. The total is 10.",
+      "Longer bit strings follow the same rule. The converter performs that positional calculation directly with integer arithmetic, so it does not lose precision on values that are larger than ordinary JavaScript floating-point numbers."
+    ],
+    useCasesHeading: "Common binary to decimal workflows",
+    useCases: [
+      "Checking digital logic examples and truth-table exercises.",
+      "Reading permission bits, feature flags, and compact status values.",
+      "Converting packet or protocol examples into decimal fields.",
+      "Explaining a bit pattern in documentation without asking readers to calculate it manually."
+    ],
+    accuracy: [
+      "The same binary digits can mean different signed values at different widths. For example, 11111111 is 255 as an unsigned value, but it is -1 in signed 8-bit two's-complement. This page returns the unsigned mathematical value unless a minus sign is present.",
+      "Leading zeroes do not change the decimal value. They may still be important in a protocol table or register map, so keep the original binary text nearby if display width matters."
+    ],
+    faq: [
+      ["Can I use a 0b prefix?", "Yes. 0b1010 is accepted and returns 10."],
+      ["Why are spaces treated as separate values?", "The page supports batch conversion, so spaces, commas, and line breaks separate entries."],
+      ["Does it support fractional binary numbers?", "No. This page is for whole-number binary integers."]
+    ]
+  },
+  "decimal-to-hex": {
+    introHeading: "Write base-10 values in compact hexadecimal form",
+    intro: [
+      "The decimal to hex page is for values that start in ordinary base 10 but need to be used in code, documentation, memory maps, color work, or low-level troubleshooting. Decimal is readable, while hexadecimal is shorter and lines up neatly with bytes and nibbles.",
+      "Enter whole decimal integers and the converter returns uppercase hexadecimal. The output is intentionally plain so it can be copied into source comments, issue trackers, tables, or debugging notes without decorative formatting getting in the way."
+    ],
+    stepsHeading: "How to convert decimal to hex",
+    steps: [
+      "Paste a whole decimal integer such as 255, 42, or 2147483647.",
+      "Use one value per line when checking a batch of constants or examples.",
+      "Read the hexadecimal output without a prefix, then add 0x later if your destination requires it.",
+      "Keep a minus sign only when the target context expects signed hexadecimal notation.",
+      "Pad the result with leading zeroes after conversion when a fixed byte width is required."
+    ],
+    examplesHeading: "Decimal to hex examples",
+    examples: [
+      ["255", "FF", "The common full-byte maximum."],
+      ["42", "2A", "A small decimal value often used in examples."],
+      ["2147483647", "7FFFFFFF", "The highest positive signed 32-bit integer."]
+    ],
+    validationHeading: "Decimal input rules",
+    validation: [
+      "This page accepts whole base-10 integers. It does not convert decimal fractions such as 10.5 because fractional base conversion has different rules and can create confusing repeating values.",
+      "Commas are treated as separators for batch input, not as thousands separators inside one number. For one large value, paste the digits without grouping punctuation."
+    ],
+    formulaHeading: "How hexadecimal is produced",
+    formula: [
+      "Decimal to hexadecimal conversion repeatedly divides the number by 16 and records the remainders. Remainders 10 through 15 become A through F. Reading those remainders in reverse gives the hex representation.",
+      "The browser implementation uses BigInt for integer pages, so values that are common in code and systems work can be converted without scientific notation or binary floating-point rounding."
+    ],
+    useCasesHeading: "When decimal to hex is useful",
+    useCases: [
+      "Preparing numeric constants for source code.",
+      "Checking decimal IDs that must be entered into a hexadecimal field.",
+      "Creating byte, register, or memory-offset examples for documentation.",
+      "Comparing a spreadsheet value with a log entry that uses base 16."
+    ],
+    accuracy: [
+      "Hexadecimal output does not automatically include 0x because not every destination uses that style. CSS colors, assembly listings, JSON examples, and protocol documents can each have their own prefix or width convention.",
+      "If the target is a signed fixed-width field, the display form may require two's-complement formatting. Convert the value first, then apply the width rule from the system you are working with."
+    ],
+    faq: [
+      ["Does the output include 0x?", "No. The result is the hex digits only so you can add the prefix style your destination expects."],
+      ["Are lowercase hex letters supported?", "The output uses uppercase A-F for easier scanning in technical tables."],
+      ["Can I convert negative decimal values?", "Yes, negative whole integers are supported where signed notation is appropriate."]
+    ]
+  },
+  "binary-converter": {
+    introHeading: "Compare one binary value across common number bases",
+    intro: [
+      "The binary converter page is broader than a one-way binary to decimal tool. It is for the situation where a bit pattern needs to be compared as decimal, hexadecimal, octal, and binary at the same time. That is useful when a source alternates between formats or when a team uses different notations in different documents.",
+      "Choose the input base, paste the value, and review the equivalent forms together. The page is designed for quick cross-checking rather than a long lesson, so the conversion panel stays visible before the explanatory material."
+    ],
+    stepsHeading: "How to use the binary converter",
+    steps: [
+      "Confirm the input base before typing; the default is binary because most visitors arrive with bits.",
+      "Paste one integer value into the input box.",
+      "Compare the decimal, hexadecimal, binary, and octal rows in the result panel.",
+      "Switch the base selector when the same source value is actually decimal, hex, or octal.",
+      "Use the single-purpose pages when you need batch conversion from one specific base to another."
+    ],
+    examplesHeading: "Multi-base examples",
+    examples: [
+      ["11010110", "214 / D6 / 326", "One byte shown as decimal, hex, and octal."],
+      ["101010", "42 / 2A / 52", "A small value that demonstrates all rows clearly."],
+      ["10000000", "128 / 80 / 200", "A single high bit in an 8-bit value."]
+    ],
+    validationHeading: "Base selector and validation",
+    validation: [
+      "The valid digits depend on the selected base. Binary accepts 0 and 1, decimal accepts 0 through 9, octal accepts 0 through 7, and hexadecimal accepts 0 through 9 plus A through F. If the wrong base is selected, a value that looks correct in one notation may fail in another.",
+      "This page expects one integer at a time because it displays several output rows for the same value. For long lists, use a direct converter page such as binary to decimal or decimal to binary."
+    ],
+    formulaHeading: "Why the same value has several names",
+    formula: [
+      "A number base changes the written representation, not the quantity. Binary 11010110, decimal 214, hexadecimal D6, and octal 326 all point to the same integer. Seeing the rows together makes it easier to line up documentation that uses mixed notation.",
+      "Hex is especially helpful next to binary because each hex digit maps to four bits. Octal maps to groups of three bits and still appears in permissions, legacy systems, and some educational material."
+    ],
+    useCasesHeading: "Best uses for the binary converter",
+    useCases: [
+      "Comparing a bit pattern with a hex dump or decimal field.",
+      "Teaching how one integer can be represented in multiple bases.",
+      "Checking a small value before pasting it into a script or issue comment.",
+      "Reading older references that still include octal notation."
+    ],
+    accuracy: [
+      "The converter reports mathematical integer equivalents. It does not infer signed widths or floating-point encodings from raw bits. If you are decoding IEEE 754 floats or signed fields, use the relevant width and format specification.",
+      "Leading zeroes are not preserved in numeric output. If a binary value must stay at eight, sixteen, or thirty-two bits, pad the displayed result after conversion according to your table or protocol."
+    ],
+    faq: [
+      ["Can the input be hexadecimal?", "Yes. Change the input base selector to Hexadecimal before entering the value."],
+      ["Why is there no batch mode here?", "The page shows several output formats for one value. Batch work is clearer on the direct converter pages."],
+      ["Does octal still matter?", "Yes in some permissions, legacy tools, and teaching contexts, so it is included for comparison."]
+    ]
+  },
+  "hex-converter": {
+    introHeading: "Turn one hexadecimal value into several useful readings",
+    intro: [
+      "The hex converter page is for users who have one hexadecimal value and want more than a single answer. It shows the decimal, binary, octal, and, when byte data is present, text interpretation from the same input. That makes it useful for logs, byte strings, device output, and technical examples.",
+      "Use the dedicated hex to decimal or hex to binary pages when you only need one target format. Use this page when the goal is comparison: the same value shown in the formats developers most often need side by side."
+    ],
+    stepsHeading: "How to use the hex converter",
+    steps: [
+      "Leave the input base set to Hexadecimal unless your source value is in another base.",
+      "Paste a single value such as FF, D6, or 48656C6C6F.",
+      "Review the decimal, hex, binary, and octal rows together.",
+      "Use the ASCII row only when the input represents complete bytes, not an arbitrary numeric constant.",
+      "Switch to the hex to ASCII page for byte-focused text decoding with clearer byte validation."
+    ],
+    examplesHeading: "Hex converter examples",
+    examples: [
+      ["FF", "255 / 11111111", "A byte-size value shown in common numeric forms."],
+      ["D6", "214 / 11010110", "A compact hex value matched with its bit pattern."],
+      ["48656C6C6F", "Hello", "A byte string that can also be read as text."]
+    ],
+    validationHeading: "Hex input and byte interpretation",
+    validation: [
+      "For numeric conversion, the input must be a valid integer in the selected base. For text interpretation, hexadecimal input also needs complete byte pairs. A value such as F is a valid number, but it is not a complete byte by itself.",
+      "The ASCII or UTF-8 reading is a convenience, not a promise that every hex number is meant to be text. If the decoded row contains replacement characters or control characters, the source value may be binary data rather than readable text."
+    ],
+    formulaHeading: "Why hex is a useful pivot format",
+    formula: [
+      "Hexadecimal sits neatly between binary and decimal. One hex digit represents four bits, so pairs of hex digits represent bytes. That makes it compact enough for logs while still being easy to expand back into binary when bit-level inspection is needed.",
+      "This page uses that relationship to show several views at once. The decimal row helps with everyday comparison, the binary row exposes flags and masks, and the byte text row helps when the value is encoded character data."
+    ],
+    useCasesHeading: "Good uses for a hex converter",
+    useCases: [
+      "Checking a hex dump value before writing a bug report.",
+      "Comparing an address, mask, or checksum in decimal and binary.",
+      "Looking for readable text inside a byte sequence.",
+      "Preparing examples where readers may prefer different number bases."
+    ],
+    accuracy: [
+      "The numeric rows treat the input as an integer. Text decoding treats the same characters as bytes. Those are different interpretations, so use the row that matches the source context.",
+      "If a protocol requires fixed-width bytes, preserve leading zeroes in the source. Numeric conversion may omit them because they do not change the mathematical value."
+    ],
+    faq: [
+      ["Can this page decode hex text?", "Yes for complete byte pairs, but the dedicated hex to ASCII page gives stricter byte-focused guidance."],
+      ["Why does a valid hex number sometimes not show useful text?", "Not every hex number is encoded text. Many values are addresses, masks, checksums, or binary fields."],
+      ["Can I change the input base?", "Yes. The selector lets you compare decimal, binary, hex, and octal inputs."]
+    ]
+  },
+  "decimal-to-binary": {
+    introHeading: "Show how a decimal integer is represented with bits",
+    intro: [
+      "The decimal to binary page is for base-10 values that need to become bit strings. It helps when a number from a spreadsheet, problem statement, API field, or user interface must be compared with binary flags, masks, or classroom examples.",
+      "Enter whole decimal integers and the converter returns base-2 output. The result does not add a 0b prefix by default, which keeps the value easy to copy into worksheets, notes, and systems that already define the base elsewhere."
+    ],
+    stepsHeading: "How to convert decimal to binary",
+    steps: [
+      "Paste a whole decimal integer without thousands separators.",
+      "Use line breaks for multiple values so each binary output stays easy to compare.",
+      "Add a 0b prefix after conversion only if your destination code style requires it.",
+      "Pad with leading zeroes after conversion when a fixed bit width is required.",
+      "For signed storage, confirm the target width before using two's-complement notation."
+    ],
+    examplesHeading: "Decimal to binary examples",
+    examples: [
+      ["10", "1010", "A simple value with two set bits."],
+      ["255", "11111111", "Eight bits all set to 1."],
+      ["1024", "10000000000", "A power of two with one set bit."]
+    ],
+    validationHeading: "Decimal input rules",
+    validation: [
+      "This converter accepts integer decimal input. It rejects letters, base prefixes, and fractional values because the page is focused on whole-number bit representation.",
+      "A leading minus sign is supported for signed notation, but the output is a mathematical negative binary value. If you need an unsigned fixed-width two's-complement display, apply the width rule from your target system."
+    ],
+    formulaHeading: "How decimal becomes binary",
+    formula: [
+      "Decimal to binary conversion repeatedly divides the number by 2 and records the remainders. Those remainders become the output bits when read from last to first. Powers of two appear as a 1 followed by zeroes.",
+      "The converter keeps the arithmetic in integer form, so long values remain exact. That is important when the decimal value is an identifier, bit mask, or register value rather than a measurement."
+    ],
+    useCasesHeading: "Where decimal to binary helps",
+    useCases: [
+      "Building or checking bit masks from decimal constants.",
+      "Teaching place values and powers of two.",
+      "Comparing API fields with binary documentation.",
+      "Preparing examples for networking, embedded systems, and digital logic."
+    ],
+    accuracy: [
+      "Leading zeroes are not shown because they do not change the numeric value. Add them later if the target format requires exactly 8, 16, 32, or 64 bits.",
+      "The result is not a floating-point binary representation. It is the base-2 integer form of the decimal value you entered."
+    ],
+    faq: [
+      ["Does the output include 0b?", "No. The page returns the digits only so you can add the prefix if needed."],
+      ["Can I convert 10.5?", "No. This page supports whole-number integer conversion."],
+      ["Why did leading zeroes disappear?", "They do not affect the integer value. Add them after conversion when a fixed width matters."]
+    ]
+  },
+  "hex-to-binary": {
+    introHeading: "Expand hexadecimal into the bits behind it",
+    intro: [
+      "The hex to binary page is for values that are compact in base 16 but need to be inspected at the bit level. Hex is easy to scan in logs and code, while binary reveals flags, masks, permissions, and individual bit positions.",
+      "Paste a hex value such as FF, 2A, or 0x80 and the converter returns the binary integer. It is useful for debugging, networking, embedded work, and lessons where the relationship between nibbles and bits needs to be visible."
+    ],
+    stepsHeading: "How to convert hex to binary",
+    steps: [
+      "Paste the hexadecimal value with digits 0-9 and letters A-F.",
+      "Keep a 0x prefix if it came from code; the converter accepts it.",
+      "Use separate lines for separate values instead of inserting spaces inside one value.",
+      "Pad the binary output manually if you need fixed groups of four bits.",
+      "Compare the result against the original hex digits when inspecting flags or masks."
+    ],
+    examplesHeading: "Hex to binary examples",
+    examples: [
+      ["FF", "11111111", "All bits set in one byte."],
+      ["2A", "101010", "A small alternating bit pattern."],
+      ["0x80", "10000000", "The high bit of an 8-bit byte."]
+    ],
+    validationHeading: "Hex input rules",
+    validation: [
+      "Hexadecimal input can use uppercase or lowercase letters. Values outside A-F are rejected because they belong to another notation or to surrounding text, not to the hex number.",
+      "The output is the shortest binary integer representation. If you need a nibble-aligned display, add leading zeroes to make the length a multiple of four."
+    ],
+    formulaHeading: "The four-bit relationship",
+    formula: [
+      "Each hex digit maps to four binary bits: F maps to 1111, A maps to 1010, and 8 maps to 1000. That is why hexadecimal is so common in byte-level work; it compresses binary without losing the bit pattern.",
+      "The converter returns a numeric binary value, so it may omit leading zeroes. For example, hex 0F and hex F have the same integer value, but 0F is often displayed as 00001111 when byte width matters."
+    ],
+    useCasesHeading: "When hex to binary is the right page",
+    useCases: [
+      "Inspecting bit masks copied from code.",
+      "Checking packet bytes and protocol examples.",
+      "Explaining how hex digits correspond to nibbles.",
+      "Finding which bit positions are set in a register or flag field."
+    ],
+    accuracy: [
+      "Binary output shows the mathematical value, not a fixed hardware width. If your source is a byte, word, or double word, preserve that width separately.",
+      "Negative hex values are accepted with a minus sign, but two's-complement decoding still depends on the intended bit width."
+    ],
+    faq: [
+      ["Why is 0F shown as 1111?", "Leading zeroes do not change the integer. Pad to 00001111 if you need an 8-bit display."],
+      ["Can I paste 0x80?", "Yes. Optional 0x prefixes are supported."],
+      ["Does it show groups of four bits?", "The result is plain binary. Add grouping after conversion if your document requires it."]
+    ]
+  },
+  "binary-to-hexadecimal": {
+    introHeading: "Group bits into formal hexadecimal notation",
+    intro: [
+      "The binary to hexadecimal page focuses on the full-name search intent: turning base-2 values into formal base-16 notation. It is especially useful for students and technical writers who need to show how groups of four bits become each hexadecimal digit.",
+      "Use this page when the explanation matters as much as the answer. The converter gives the hex result instantly, while the guide below keeps the nibble-grouping rule visible for documentation, lessons, and debugging notes."
+    ],
+    stepsHeading: "How to convert binary to hexadecimal",
+    steps: [
+      "Paste a binary integer made only of 0 and 1.",
+      "For hand checking, group the bits from right to left in sets of four.",
+      "Convert each group to one hexadecimal digit.",
+      "Use leading zeroes only to complete the leftmost group when explaining the process.",
+      "Compare the final hex output with the converter result before publishing or submitting work."
+    ],
+    examplesHeading: "Binary to hexadecimal examples",
+    examples: [
+      ["11111111", "FF", "Two groups of 1111 become two F digits."],
+      ["101010", "2A", "Padding to 0010 1010 explains the result."],
+      ["10000000", "80", "The high bit of a byte in hex form."]
+    ],
+    validationHeading: "Binary input rules",
+    validation: [
+      "Only binary digits are accepted. Spaces, commas, and line breaks split separate values for batch conversion, so remove visual grouping inside one number before converting.",
+      "The result uses uppercase hexadecimal letters. That makes A-F easy to distinguish in tables and matches many programming and documentation styles."
+    ],
+    formulaHeading: "Nibble grouping rule",
+    formula: [
+      "A nibble is four bits. Because 2^4 equals 16, each four-bit group maps exactly to one hexadecimal digit. This is why binary 1111 becomes F and binary 1010 becomes A.",
+      "If the leftmost group has fewer than four bits, add temporary leading zeroes only for grouping. Those zeroes help explain the conversion but do not change the value."
+    ],
+    useCasesHeading: "When to use the hexadecimal page",
+    useCases: [
+      "Writing educational material that uses the formal word hexadecimal.",
+      "Checking a manual conversion based on four-bit groups.",
+      "Turning a binary field into the compact form used in source code.",
+      "Preparing examples for digital logic, networking, and low-level programming lessons."
+    ],
+    accuracy: [
+      "The converter treats input as an integer. It does not decode floating-point layouts, character encodings, or signed fixed-width fields unless those rules are applied separately.",
+      "Leading zeroes in the original binary may matter for display width. Keep them in your notes when the value represents a byte or fixed-width register."
+    ],
+    faq: [
+      ["Is hexadecimal the same as hex?", "Yes. Hex is the common short form of hexadecimal."],
+      ["Why does 101010 become 2A?", "Group it as 0010 1010; 0010 is 2 and 1010 is A."],
+      ["Can I convert several binary numbers?", "Yes. Separate them with spaces, commas, semicolons, or line breaks."]
+    ]
+  },
+  "binary-to-hex": {
+    introHeading: "A quick path from bit strings to hex digits",
+    intro: [
+      "The binary to hex page is the shorter, task-first version of the conversion. It is aimed at visitors who already know what hex means and simply need a compact result for code, notes, or a debugging session.",
+      "Paste binary digits and the tool returns uppercase hex. The page avoids extra controls because the intent is direct: bit string in, hex value out, with enough guidance to prevent common copy and grouping mistakes."
+    ],
+    stepsHeading: "Fast binary to hex workflow",
+    steps: [
+      "Paste the binary value with no spaces inside the number.",
+      "Use separate lines if you are converting several bit strings.",
+      "Copy the uppercase hex result into your target note or code sample.",
+      "Add a 0x prefix only if your destination language or document expects it.",
+      "Use the longer binary to hexadecimal page when you need to explain the grouping process."
+    ],
+    examplesHeading: "Binary to hex examples",
+    examples: [
+      ["1101", "D", "A four-bit value that maps to one hex digit."],
+      ["11110000", "F0", "A full byte split into two nibbles."],
+      ["1001", "9", "A single nibble result."]
+    ],
+    validationHeading: "What the quick converter accepts",
+    validation: [
+      "The input must contain only 0 and 1, with optional separators between separate values. A value such as 10A1 is rejected because A belongs to hexadecimal output, not binary input.",
+      "The output is not padded unless padding is part of the mathematical value. If the original bit string is part of an 8-bit or 16-bit field, preserve that width in your surrounding documentation."
+    ],
+    formulaHeading: "Why the output is shorter",
+    formula: [
+      "Hex is shorter because every hex digit covers four binary digits. The binary string 11110000 becomes F0 because 1111 maps to F and 0000 maps to 0.",
+      "For quick work, you usually only need the result. For teaching, grouping the bits into nibbles makes the conversion easier to audit by hand."
+    ],
+    useCasesHeading: "Best quick-use cases",
+    useCases: [
+      "Converting a small bit mask while writing code.",
+      "Checking a binary example before sending it in a chat or ticket.",
+      "Preparing compact values for a table that already labels the base.",
+      "Moving from a visual bit pattern to a shorter debugging value."
+    ],
+    accuracy: [
+      "This page returns base-16 integer notation. It does not infer byte order, signedness, or character encoding from the bit string.",
+      "When converting protocol fields, keep the original bit length nearby. A result like D may represent 1101, 00001101, or a field inside a larger word depending on context."
+    ],
+    faq: [
+      ["Does the page add 0x?", "No. It returns only the hex digits so the result works in more contexts."],
+      ["Why is my grouped binary split into multiple results?", "Spaces separate batch values. Remove spaces inside one binary number."],
+      ["Is this different from binary to hexadecimal?", "The conversion is the same; this page is optimized for the shorter search phrase and quick output."]
+    ]
+  },
+  "hex-to-ascii": {
+    introHeading: "Decode hex byte pairs into readable text",
+    intro: [
+      "The hex to ASCII page is for byte strings such as 48 65 6C 6C 6F that need to be read as characters. It is useful when a log, packet capture, database field, or encoded example contains hex bytes and you want to see whether they form readable text.",
+      "The tool accepts complete hex byte pairs with optional spaces and 0x prefixes. It decodes with UTF-8 handling in the browser, so ordinary ASCII appears directly and multi-byte text is handled using modern web text rules."
+    ],
+    stepsHeading: "How to decode hex to ASCII",
+    steps: [
+      "Paste hex bytes as pairs, such as 48 65 6C 6C 6F, or as one continuous string with an even number of digits.",
+      "Keep optional 0x prefixes only at the start of byte tokens.",
+      "Remove labels, quotes, offsets, and comments from the source dump before decoding.",
+      "Read the decoded text and check whether replacement characters indicate non-text bytes.",
+      "Use the hex converter page when the same input should also be inspected as a number."
+    ],
+    examplesHeading: "Hex to ASCII examples",
+    examples: [
+      ["48 65 6C 6C 6F", "Hello", "A simple ASCII word encoded as bytes."],
+      ["41 42 43", "ABC", "Three uppercase ASCII letters."],
+      ["30 78 46 46", "0xFF", "Text characters that happen to look like hex notation."]
+    ],
+    validationHeading: "Byte validation rules",
+    validation: [
+      "Text decoding requires complete bytes. A single hex digit is a valid nibble, but it is not a full byte, so this page asks for an even number of hex digits.",
+      "Invalid characters are rejected instead of stripped. That prevents a pasted dump such as 48 ZZ 65 from silently becoming a different byte sequence."
+    ],
+    formulaHeading: "How bytes become characters",
+    formula: [
+      "ASCII assigns character meanings to byte values. Hex 48 is decimal 72, which maps to H; hex 65 maps to e. When the bytes are decoded in order, the characters form the output text.",
+      "Modern text often uses UTF-8. Plain ASCII stays one byte per character, while characters outside the basic ASCII range may use multiple bytes. That is normal for web text and many logs."
+    ],
+    useCasesHeading: "When hex to ASCII helps",
+    useCases: [
+      "Reading text fragments in packet captures or hex dumps.",
+      "Checking encoded examples in documentation.",
+      "Verifying whether a byte sequence contains a readable marker or header.",
+      "Teaching the relationship between byte values and characters."
+    ],
+    accuracy: [
+      "Not every byte sequence is text. If the result includes unusual symbols or replacement characters, the input may be compressed data, encrypted data, binary structure, or text in a different encoding.",
+      "ASCII control bytes may not display as visible characters. When exact byte-level inspection matters, keep the original hex alongside the decoded text."
+    ],
+    faq: [
+      ["Can I paste bytes without spaces?", "Yes, as long as the total number of hex digits is even."],
+      ["Why does the output show replacement characters?", "The bytes may not form valid readable UTF-8 text."],
+      ["Does the page send my bytes to a server?", "No. Decoding runs in your browser after the page loads."]
+    ]
+  },
+  "text-to-binary": {
+    introHeading: "Encode readable text as UTF-8 binary bytes",
+    intro: [
+      "The text to binary page turns characters into the byte-level bit groups used by computers. It is useful for lessons, examples, simple encoding checks, and documentation that needs to show how letters become binary data.",
+      "Type or paste text and the converter outputs one 8-bit group per UTF-8 byte. Plain English letters map to familiar ASCII bytes, while symbols and non-English characters may produce multiple byte groups."
+    ],
+    stepsHeading: "How to convert text to binary",
+    steps: [
+      "Enter the text exactly as it should be encoded, including spaces and punctuation.",
+      "Review the output as 8-bit byte groups separated by spaces.",
+      "Keep the original text nearby when explaining which byte belongs to which character.",
+      "Expect multi-byte output for characters outside basic ASCII.",
+      "Use binary to ASCII when you need to decode byte groups back into text."
+    ],
+    examplesHeading: "Text to binary examples",
+    examples: [
+      ["Hello", "01001000 01100101 01101100 01101100 01101111", "Five ASCII letters as five bytes."],
+      ["A", "01000001", "The uppercase letter A."],
+      ["Hi!", "01001000 01101001 00100001", "Letters plus punctuation."]
+    ],
+    validationHeading: "Text input behavior",
+    validation: [
+      "This page accepts ordinary text rather than numeric input. It does not treat the characters 1 and 0 as a binary number; it encodes those visible characters as text bytes.",
+      "Spaces, punctuation, and line breaks are part of the input. If they appear in the text box, they will be encoded in the binary output."
+    ],
+    formulaHeading: "How text becomes bytes",
+    formula: [
+      "The browser encodes the string as UTF-8. For ASCII characters, the UTF-8 byte is the same as the ASCII code: H is hex 48, which is binary 01001000.",
+      "UTF-8 uses multiple bytes for many symbols and international characters. That means one visible character can produce more than one 8-bit group, which is expected and usually correct."
+    ],
+    useCasesHeading: "Good uses for text to binary",
+    useCases: [
+      "Demonstrating character encoding in a class or tutorial.",
+      "Checking simple byte output before writing documentation.",
+      "Preparing examples for ASCII, UTF-8, or networking lessons.",
+      "Seeing how punctuation and spaces are represented as bytes."
+    ],
+    accuracy: [
+      "The output is byte-oriented, not a compressed or encrypted representation. It simply shows the UTF-8 bytes for the text you entered.",
+      "If another system uses a legacy encoding instead of UTF-8, its byte output may differ for non-ASCII characters. Confirm the expected encoding before comparing results."
+    ],
+    faq: [
+      ["Why does one character sometimes produce several bytes?", "UTF-8 uses multiple bytes for many characters outside basic ASCII."],
+      ["Are spaces encoded?", "Yes. A space is a character and appears as its own byte group."],
+      ["Is typing 1010 treated as binary?", "No. It is encoded as the four text characters 1, 0, 1, and 0."]
+    ]
+  },
+  "hex-calculator": {
+    introHeading: "Do quick arithmetic on hexadecimal values",
+    intro: [
+      "The hex calculator page is for arithmetic on base-16 values such as offsets, masks, checksums, and small address adjustments. It saves the extra step of converting both operands to decimal before adding, subtracting, multiplying, dividing, or taking a modulo.",
+      "Enter two hex integers, choose the operation, and the result is shown in hexadecimal, decimal, and binary. That side-by-side output helps verify the answer before it is copied into code, notes, or a debugging session."
+    ],
+    stepsHeading: "How to use the hex calculator",
+    steps: [
+      "Enter the first hexadecimal integer in the first field.",
+      "Enter the second hexadecimal integer in the second field.",
+      "Choose add, subtract, multiply, divide, or modulo.",
+      "Read the hex result first, then use the decimal and binary rows as a sanity check.",
+      "Avoid division by zero and confirm whether your workflow expects integer division."
+    ],
+    examplesHeading: "Hex calculator examples",
+    examples: [
+      ["FF + 1", "100", "A byte overflow into the next hex place."],
+      ["2A * 10", "2A0", "Multiplication by hex 10 shifts one hex digit."],
+      ["100 - 1", "FF", "Subtracting one from hex 100 returns FF."]
+    ],
+    validationHeading: "Calculator input rules",
+    validation: [
+      "Both operands must be hexadecimal integers. Optional signs and 0x-style notation are accepted where they make sense, but unsupported characters are rejected before arithmetic runs.",
+      "Division returns an integer quotient because this calculator is focused on base-conversion and systems work, where offsets and masks are usually whole-number values."
+    ],
+    formulaHeading: "How arithmetic is evaluated",
+    formula: [
+      "The operation is performed on the integer values represented by the hex inputs. The answer is then formatted back into hex and also shown in decimal and binary for comparison.",
+      "Modulo returns the remainder after integer division. It is useful for alignment checks, cyclic counters, and situations where a value needs to be reduced to a range."
+    ],
+    useCasesHeading: "Where hex arithmetic is useful",
+    useCases: [
+      "Adding offsets while reading memory maps.",
+      "Checking mask and flag calculations.",
+      "Confirming examples before adding them to technical documentation.",
+      "Comparing a hex result with decimal output from another tool."
+    ],
+    accuracy: [
+      "This calculator does not simulate overflow for a fixed CPU width. If your target wraps at 8, 16, 32, or 64 bits, apply that width rule after calculating the mathematical result.",
+      "Negative results are displayed with a minus sign. Two's-complement formatting depends on width and is intentionally not guessed."
+    ],
+    faq: [
+      ["Does division produce fractions?", "No. Division returns the integer quotient."],
+      ["Can I use lowercase hex?", "Yes. Input is case-insensitive and output is uppercase."],
+      ["Does it handle overflow?", "It returns the mathematical integer result. Apply fixed-width overflow rules separately if needed."]
+    ]
+  },
+  "hexadecimal-calculator": {
+    introHeading: "A formal hexadecimal calculator for base-16 arithmetic",
+    intro: [
+      "The hexadecimal calculator page serves the full-term query and gives a more explicit base-16 arithmetic workspace. It is useful for learners, technical writers, and engineers who want the operation and the equivalent decimal and binary readings in one place.",
+      "The calculator supports addition, subtraction, multiplication, integer division, and modulo on hexadecimal integers. It keeps the result transparent by showing the same answer in three bases."
+    ],
+    stepsHeading: "How to calculate with hexadecimal numbers",
+    steps: [
+      "Enter the first hexadecimal number using digits 0-9 and letters A-F.",
+      "Enter the second hexadecimal number.",
+      "Select the arithmetic operation.",
+      "Check the hexadecimal answer and compare the decimal row if you need an everyday value.",
+      "Use the binary row when the arithmetic affects flags, masks, or bit positions."
+    ],
+    examplesHeading: "Hexadecimal arithmetic examples",
+    examples: [
+      ["2A * 10", "2A0", "Multiplying by base sixteen shifts the hex places."],
+      ["100 / 10", "10", "Hex 100 divided by hex 10 equals hex 10."],
+      ["1F + 1", "20", "A carry from F into the next hex place."]
+    ],
+    validationHeading: "Hexadecimal calculator validation",
+    validation: [
+      "Inputs are treated as base-16 integers. The page rejects invalid symbols instead of assuming a nearby decimal or text meaning.",
+      "Modulo and division require a nonzero second value. If the second field is zero, the calculator reports a clear validation message instead of returning an undefined result."
+    ],
+    formulaHeading: "Base-16 arithmetic notes",
+    formula: [
+      "Hexadecimal arithmetic follows the same integer rules as decimal arithmetic, but each place is worth sixteen times the place to its right. Carries happen after F, not after 9.",
+      "The calculator performs the math on exact integers and formats the answer into hex, decimal, and binary. That makes it easier to verify by a second method."
+    ],
+    useCasesHeading: "When to use the hexadecimal calculator",
+    useCases: [
+      "Teaching base-16 arithmetic with visible cross-checks.",
+      "Reviewing examples that use the full word hexadecimal.",
+      "Checking address, offset, and alignment calculations.",
+      "Verifying modulo results for cyclic or fixed-range values."
+    ],
+    accuracy: [
+      "The tool does not assume a processor word size. If a hardware register wraps, clamps, or stores signed values, use the hardware rule after the calculator gives the mathematical result.",
+      "Decimal and binary rows are derived from the same exact result, so they should match the hex row unless a fixed-width interpretation is being applied elsewhere."
+    ],
+    faq: [
+      ["Is this different from the hex calculator?", "The arithmetic engine is the same; this page is written for the full hexadecimal calculator search intent."],
+      ["Can I calculate modulo?", "Yes. Choose the modulo operation and enter a nonzero second value."],
+      ["Why is multiplication by 10 special in hex?", "Hex 10 equals decimal 16, so multiplying by it shifts the value one hexadecimal place."]
+    ]
+  },
+  "binary-calculator": {
+    introHeading: "Calculate directly with binary integers",
+    intro: [
+      "The binary calculator page lets you add, subtract, multiply, divide, and take remainders without first converting bit strings by hand. It is useful for digital logic exercises, flag checks, and quick verification when binary is the format you are already using.",
+      "Enter two binary integers and choose an operation. The result is shown in binary first, with decimal and hexadecimal rows underneath so you can cross-check the same value in more familiar or compact notation."
+    ],
+    stepsHeading: "How to use the binary calculator",
+    steps: [
+      "Enter the first binary value using only 0 and 1.",
+      "Enter the second binary value.",
+      "Select add, subtract, multiply, divide, or modulo.",
+      "Use the decimal result to confirm the arithmetic if the binary result is long.",
+      "Use the hexadecimal result when the answer needs to fit code or documentation."
+    ],
+    examplesHeading: "Binary calculator examples",
+    examples: [
+      ["1010 + 11", "1101", "Ten plus three equals thirteen."],
+      ["1111 - 1", "1110", "A simple subtraction from fifteen."],
+      ["1000 * 10", "10000", "Eight times two equals sixteen."]
+    ],
+    validationHeading: "Binary calculator input rules",
+    validation: [
+      "Both operands must be binary integers. Values containing 2 through 9 or A through F are rejected because they belong to other bases.",
+      "Division and modulo use integer arithmetic and require a nonzero second operand. That matches the whole-number nature of bit patterns and masks."
+    ],
+    formulaHeading: "How binary arithmetic is shown",
+    formula: [
+      "The calculator converts each operand to an exact integer, performs the selected operation, and formats the result back to binary. Decimal and hex rows come from the same result.",
+      "Binary carries happen when a column reaches two. For example, 1 + 1 becomes 10 in binary, just as 9 + 1 becomes 10 in decimal."
+    ],
+    useCasesHeading: "Good uses for binary arithmetic",
+    useCases: [
+      "Checking homework or digital logic examples.",
+      "Adding or subtracting small bit patterns.",
+      "Comparing binary math with a decimal explanation.",
+      "Verifying mask operations before writing documentation."
+    ],
+    accuracy: [
+      "This is an integer calculator, not a bitwise operator panel. It performs arithmetic operations, so it does not replace AND, OR, XOR, or shift tools.",
+      "The calculator does not infer fixed-width overflow. If your target wraps at a certain number of bits, apply that rule separately."
+    ],
+    faq: [
+      ["Can I use 0b prefixes?", "For calculator fields, enter the binary digits directly for the clearest validation."],
+      ["Does division return a remainder?", "Division returns the quotient. Use modulo to get the remainder."],
+      ["Does it support bitwise AND or XOR?", "No. This calculator focuses on arithmetic operations."]
+    ]
+  },
+  "hex-to-decimal-converter": {
+    introHeading: "A dedicated base-16 to base-10 converter page",
+    intro: [
+      "The hex to decimal converter page is a focused landing page for users who search with the word converter and expect the base-10 answer immediately. It overlaps with the home page in function, but the content is written for conversion verification, batch work, and trust in the result.",
+      "Use it when the output must be decimal and the source is definitely hexadecimal. The tool accepts large integers, optional 0x prefixes, and multiple values, then returns exact decimal output without uploading the input to a server."
+    ],
+    stepsHeading: "How to use this hex to decimal converter",
+    steps: [
+      "Paste the hex value or a short batch of hex values into the input field.",
+      "Keep optional 0x prefixes if they are part of the source notation.",
+      "Review the decimal output in the same order as the input.",
+      "Use the validation message to catch accidental non-hex characters.",
+      "Copy the decimal result into your ticket, spreadsheet, lesson, or code comment."
+    ],
+    examplesHeading: "Converter examples",
+    examples: [
+      ["1F4", "500", "A compact value that expands to a round decimal number."],
+      ["0x10", "16", "A base-16 place value with the code prefix."],
+      ["ABCD", "43981", "A mixed letter-and-digit hex value."]
+    ],
+    validationHeading: "What makes this converter trustworthy",
+    validation: [
+      "The page validates the source base before converting. That means a value containing G, a colon, a quote, or copied label text is not treated as a best-effort guess.",
+      "Batch conversion is line-friendly. If you paste several values, the output keeps the same order, which makes it easier to compare against the original list."
+    ],
+    formulaHeading: "Base-16 to base-10 rule",
+    formula: [
+      "Each position in a hex number is a power of 16. In 1F4, the 1 is worth 256, F is worth 15 x 16, and 4 is worth 4. The total is 500.",
+      "The converter uses exact integer arithmetic for numeric values, so it can display long decimal results without rounding them into scientific notation."
+    ],
+    useCasesHeading: "Best uses for this converter page",
+    useCases: [
+      "Converting copied constants while writing technical notes.",
+      "Checking base-conversion homework against a known tool.",
+      "Normalizing hex identifiers before adding them to a spreadsheet.",
+      "Explaining a base-16 value to someone who expects decimal."
+    ],
+    accuracy: [
+      "The page reports the mathematical integer value. It does not guess two's-complement signed interpretation because that requires a known bit width.",
+      "If the decimal result will be used in a system with size limits, compare it with that system's accepted range before saving it."
+    ],
+    faq: [
+      ["Why is this separate from the home page?", "This page is written for the exact hex to decimal converter search intent and batch conversion workflow."],
+      ["Can it handle ABCD?", "Yes. ABCD converts to 43981."],
+      ["Does it upload my input?", "No. Conversion runs in the browser after the static page loads."]
+    ]
+  },
+  "binary-to-ascii": {
+    introHeading: "Decode binary byte groups into text",
+    intro: [
+      "The binary to ASCII page is for byte groups such as 01001000 01100101 that need to be read as characters. It helps with classroom examples, packet notes, simple encoded messages, and debugging snippets where the source is shown as bits rather than hex.",
+      "Each group is treated as one byte after validation. The decoded output uses UTF-8 handling, so ordinary ASCII appears as expected and multi-byte sequences can be represented when the byte groups form valid UTF-8."
+    ],
+    stepsHeading: "How to decode binary to ASCII",
+    steps: [
+      "Paste one to eight binary digits per byte group.",
+      "Separate byte groups with spaces, commas, or line breaks.",
+      "Keep the order exactly as it appears in the source data.",
+      "Check the decoded text for replacement characters or unexpected control characters.",
+      "Use text to binary when you need to create byte groups from readable text."
+    ],
+    examplesHeading: "Binary to ASCII examples",
+    examples: [
+      ["01001000 01100101 01101100 01101100 01101111", "Hello", "Five byte groups decoded as a word."],
+      ["01000001", "A", "One byte for uppercase A."],
+      ["00110001 00110000", "10", "The text characters one and zero."]
+    ],
+    validationHeading: "Binary byte rules",
+    validation: [
+      "A byte can be written with up to eight bits on this page. Short groups are left-padded before decoding, which is useful for small examples, but fixed-width technical data is clearest when written as full 8-bit groups.",
+      "Any group containing digits other than 0 or 1 is rejected. That prevents decimal or hex text from being accidentally decoded as if it were binary."
+    ],
+    formulaHeading: "How binary becomes characters",
+    formula: [
+      "Each byte group is converted from base 2 to a byte value. For example, 01001000 is decimal 72, and ASCII value 72 is H.",
+      "The bytes are then decoded in order. For basic ASCII, each byte maps to one character. For UTF-8 text outside basic ASCII, several bytes may combine into one visible character."
+    ],
+    useCasesHeading: "Where binary to ASCII is useful",
+    useCases: [
+      "Checking simple encoded messages in lessons.",
+      "Reading byte-level examples that are shown as bits.",
+      "Verifying whether binary data contains readable text.",
+      "Comparing binary, ASCII, and UTF-8 representations."
+    ],
+    accuracy: [
+      "Binary data is not always text. If the decoded output looks wrong, the source may be compressed, encrypted, structured, or encoded with a different character set.",
+      "Control characters may not be visible in the output. Keep the source byte groups when exact byte values matter."
+    ],
+    faq: [
+      ["Do byte groups need exactly eight bits?", "Full 8-bit groups are best, but the tool accepts one to eight bits and pads short groups."],
+      ["Why does 00110001 decode to 1?", "It is the ASCII byte for the character 1, not the numeric value one."],
+      ["Can I paste line breaks?", "Yes. Spaces, commas, semicolons, and line breaks separate byte groups."]
+    ]
+  },
+  "binary-to-decimal-converter": {
+    introHeading: "A focused binary to decimal converter for exact answers",
+    intro: [
+      "The binary to decimal converter page is written for visitors who want a direct base-2 to base-10 conversion and enough supporting detail to trust the result. It is useful for homework, documentation, and technical checks where decimal output is the final answer.",
+      "The converter accepts binary integers, optional 0b prefixes, and short batches. It returns exact decimal integers and validates the input so non-binary characters do not slip into the calculation."
+    ],
+    stepsHeading: "How to use this binary to decimal converter",
+    steps: [
+      "Paste a binary integer such as 1001, 100000000, or 11111111.",
+      "Leave 0b prefixes in place if they came from source code.",
+      "Use one line per value for batch conversion.",
+      "Check validation messages for spaces inside a single intended bit string.",
+      "Copy the decimal result with the original base labels when documenting the answer."
+    ],
+    examplesHeading: "Binary to decimal converter examples",
+    examples: [
+      ["1001", "9", "Eight plus one."],
+      ["100000000", "256", "A power of two with one set bit."],
+      ["11111111", "255", "All bits set in one byte."]
+    ],
+    validationHeading: "Validation for converter-style input",
+    validation: [
+      "The page accepts only binary digits after removing an optional 0b prefix. A digit such as 2 is a strong signal that the value was copied from another base, so the converter stops and reports the issue.",
+      "Separators define separate values. If you want to show visual grouping inside one binary number, remove those spaces before using this batch-oriented converter."
+    ],
+    formulaHeading: "Base-2 to base-10 rule",
+    formula: [
+      "Each binary position is a power of two. A 1 contributes that place value and a 0 contributes nothing. Adding the active place values gives the decimal answer.",
+      "The calculation is exact for integers. That matters for long bit strings because approximate floating-point conversion can hide errors in the low-order digits."
+    ],
+    useCasesHeading: "Best uses for the converter page",
+    useCases: [
+      "Submitting or checking base-conversion exercises.",
+      "Translating binary fields into decimal values for documentation.",
+      "Comparing firmware or protocol examples with decimal tables.",
+      "Explaining a bit pattern to readers who do not work in base 2."
+    ],
+    accuracy: [
+      "Signed interpretation depends on bit width. The converter returns the mathematical integer form, so 11111111 returns 255 unless you separately interpret it as signed 8-bit data.",
+      "Leading zeroes are useful for display width but not for the decimal value. Preserve them in the original source if width matters."
+    ],
+    faq: [
+      ["Can I paste several binary values?", "Yes. Separate them with spaces, commas, semicolons, or line breaks."],
+      ["Does 0b1001 work?", "Yes. It converts to 9."],
+      ["Does the converter handle signed binary?", "It returns the mathematical value. Signed two's-complement interpretation requires a bit width."]
+    ]
+  }
+};
 
 async function main() {
   await rm(dist, { force: true, recursive: true });
@@ -491,40 +1288,33 @@ function renderBaseSelect(page) {
 }
 
 function articleFor(page) {
-  const keywordTitle = titleCase(page.keyword);
   const related = relatedFor(page).slice(0, 4);
-  const isText = ["hex-to-ascii", "text-to-binary", "binary-to-ascii"].includes(page.tool);
-  const isCalculator = page.calculator;
-  const inputType = isCalculator ? "two input values" : isText ? "byte or text input" : "integer input";
+  const guide = pageGuides[page.tool];
+  if (!guide) {
+    throw new Error(`Missing guide content for ${page.tool}`);
+  }
 
   return `
-    <h2 id="how-it-works">What this ${escapeHtml(page.keyword)} page is for</h2>
-    <p>${keywordTitle} searches usually come from a practical moment, not from abstract math curiosity. Someone has a value in one notation, a bug report, a device manual, a packet capture, a classroom worksheet, a color table, a checksum, or a line of source code, and they need the same value in a form that fits the next step. This page is built around that real intent. The converter is placed first, the result updates immediately, and the guide below explains what the answer means so you can copy it with confidence.</p>
-    <p>The tool runs in your browser. That matters for small but sensitive technical details, because copied data can include internal identifiers, offsets, serial values, or diagnostic fragments. The page does not need an account, and it does not need a round trip to a remote calculator just to turn one representation into another. You can paste a single value, test the sample, clear the field, or process several values at once when the converter supports lists.</p>
+    <h2 id="how-it-works">${escapeHtml(guide.introHeading)}</h2>
+    ${renderParagraphs(guide.intro)}
 
-    <h2>How to use the ${escapeHtml(page.keyword)} tool</h2>
-    <p>Start by pasting your ${inputType} into the input area. Keep the value as plain text, using the normal digits for the source format. ${escapeHtml(page.note)} The result panel updates as soon as the input is valid. If the page reports a validation message, check for extra punctuation, unsupported digits, or a prefix that belongs to another base. For repeated work, place each value on a separate line so the output can be reviewed line by line.</p>
-    <p>${escapeHtml(page.example)} This example is intentionally simple because simple examples are the fastest way to confirm that the direction is right. Once the sample result matches your expectation, replace it with your production value. Large integers are handled with browser BigInt arithmetic on numeric converter and calculator pages, so common programming values are not rounded the way they can be in floating-point-only tools.</p>
+    <h2>${escapeHtml(guide.stepsHeading)}</h2>
+    ${renderList(guide.steps, "ol")}
 
-    <h2>Why this conversion matters</h2>
-    <p>Number bases are different ways of writing the same quantity. Decimal is comfortable for everyday reading because it uses ten symbols. Binary is natural for bits because each digit is either on or off. Hexadecimal is compact because one hex digit represents four binary bits, which makes byte values, memory offsets, bit masks, and encoded data much easier to scan. A useful ${escapeHtml(page.keyword)} page should respect those roles instead of treating conversion as a generic text trick.</p>
-    <p>In real workflows, the answer often feeds another decision. A developer may compare a constant with a log line. A student may check the steps in a base conversion assignment. A network analyst may inspect a byte. A firmware engineer may line up a bit mask. A data analyst may normalize imported identifiers. This site keeps the operation focused so the result is easy to verify before it moves into code, notes, tickets, or documentation.</p>
+    <h2>${escapeHtml(guide.examplesHeading)}</h2>
+    ${renderExampleTable(guide.examples)}
 
-    <h2>Input rules and validation</h2>
-    <p>Clean input prevents confusing output. Numeric converters accept whole integers and reject characters that do not belong in the selected source base. Hexadecimal values use digits 0 through 9 and letters A through F. Binary values use only 0 and 1. Decimal values use ordinary base-10 digits. Text and ASCII pages work with bytes, so their input rules are based on complete byte groups rather than arbitrary mathematical integers.</p>
-    <p>When a value is invalid, the page shows a message instead of guessing. That is deliberate. Guessing can be dangerous when a single digit changes an address, permission mask, byte sequence, or classroom answer. If your source includes labels, comments, quotes, or punctuation, remove those parts first. If the input came from code, it is usually fine to keep common numeric prefixes such as <code>0x</code> for hex or <code>0b</code> for binary where the tool notes support them.</p>
+    <h2>${escapeHtml(guide.validationHeading)}</h2>
+    ${renderParagraphs(guide.validation)}
 
-    <h2>Common uses for ${escapeHtml(page.keyword)}</h2>
-    <p>This tool is useful for ${commonUseCases.join(", ")}. It also helps when you need a quick sanity check during a meeting or while writing an explanation. A converter that loads quickly and keeps the tool visible at the top of the page saves time because you do not have to hunt through a long tutorial before doing the work.</p>
-    <p>For programming, conversion is often tied to representation. A value may be stored one way, displayed another way, and explained in a third way. For education, seeing the source and result together makes the pattern easier to remember. For documentation, having a verified output reduces accidental typos in examples. These are small tasks, but they compound when you do them many times in a week.</p>
+    <h2>${escapeHtml(guide.formulaHeading)}</h2>
+    ${renderParagraphs(guide.formula)}
+
+    <h2>${escapeHtml(guide.useCasesHeading)}</h2>
+    ${renderList(guide.useCases)}
 
     <h2>Accuracy notes</h2>
-    <p>${isCalculator ? "Calculator pages use integer arithmetic. Division returns the integer quotient because base conversion work most often deals with whole-number values, offsets, and bit patterns rather than decimal fractions." : "Converter pages treat numeric input as integer values. They do not silently convert fractions, because fractional base conversion has different rules and is easy to misread without an explicit format."} Negative numbers are supported on numeric conversion pages where the source format makes the sign clear. For bit-level two's-complement interpretation, decide the intended bit width first, because the same visible bits can represent different signed values depending on the width.</p>
-    <p>${isText ? "For text conversion, the page uses UTF-8 byte handling in the browser. Plain ASCII characters produce the familiar one-byte results, while characters outside the basic ASCII range can use multiple bytes. That is expected and usually correct for modern web text." : "For very large values, the page displays the exact integer form rather than scientific notation. This is important for identifiers and low-level values where every digit carries meaning."} Always compare the result with the context where you plan to use it, especially when copying into a system that expects prefixes, fixed widths, leading zeroes, or grouped bytes.</p>
-
-    <h2>How to read the result</h2>
-    <p>The result is intentionally plain. It avoids decorative formatting that might make copying harder. If you need a prefix such as <code>0x</code> or <code>0b</code>, add it in the destination system according to that system's style guide. If you need a fixed byte width, pad the result on the left with zeros after conversion. The mathematical value stays the same, but the display width may matter in protocol tables, registers, and binary examples.</p>
-    <p>Batch output follows the order of the input. This lets you paste a short list, convert it, and compare each line without building a spreadsheet. When you are checking many values, keep the original source nearby until you have confirmed that every line was converted in the intended direction. Copying the wrong direction is one of the most common mistakes with base tools, especially when hex and binary values appear in the same task.</p>
+    ${renderParagraphs(guide.accuracy)}
 
     <h2>Related tools</h2>
     <p>If this page is close but not exactly the operation you need, the related converters below cover adjacent intents without mixing every feature into one crowded interface. You can move from ${escapeHtml(page.keyword)} to ${related
@@ -532,13 +1322,51 @@ function articleFor(page) {
       .join(", ")}. Keeping each page centered on one core task makes the tool faster to use and makes the explanation easier to follow.</p>
 
     <h2>Frequently asked questions</h2>
-    <h3>Does this ${escapeHtml(page.keyword)} tool send my input to a server?</h3>
-    <p>No. The conversion logic runs in your browser after the page loads. Standard hosting logs may record that a page was requested, but the values you type into the converter are processed locally.</p>
-    <h3>Can I use this page for homework or documentation?</h3>
-    <p>Yes. The examples and validation messages are written to make the conversion process understandable, not just to return a number. For formal work, include the original value, the converted value, and the base labels so readers can see the direction clearly.</p>
-    <h3>Why did my pasted value fail validation?</h3>
-    <p>The most common reason is an extra character from the source, such as a quote, colon, separator, comment, or unit label. Remove anything that is not part of the value itself, then run the conversion again.</p>
+    ${renderFaq(guide.faq)}
   `;
+}
+
+function renderParagraphs(paragraphs) {
+  return paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("");
+}
+
+function renderList(items, tag = "ul") {
+  return `<${tag}>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</${tag}>`;
+}
+
+function renderExampleTable(rows) {
+  return `
+    <div class="table-wrap">
+      <table class="example-table">
+        <thead>
+          <tr>
+            <th>Input</th>
+            <th>Result</th>
+            <th>Why it matters</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows
+            .map(
+              ([input, result, note]) => `<tr>
+                <td><code>${escapeHtml(input)}</code></td>
+                <td><code>${escapeHtml(result)}</code></td>
+                <td>${escapeHtml(note)}</td>
+              </tr>`
+            )
+            .join("")}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function renderFaq(faq) {
+  return faq
+    .map(
+      ([question, answer]) => `<h3>${escapeHtml(question)}</h3>
+      <p>${escapeHtml(answer)}</p>`
+    )
+    .join("");
 }
 
 function companyPages() {
@@ -603,7 +1431,7 @@ function companyPages() {
         <h2>How information is used</h2>
         <p>We use operational information to run, secure, debug, and improve the site. We use contact messages to respond to questions, corrections, service inquiries, or support requests. Do not send secrets, credentials, private keys, regulated personal data, or confidential production data through converter fields or email.</p>
         <h2>Third parties</h2>
-        <p>The site is hosted on Cloudflare Pages. Cloudflare may process request and security data as part of hosting, caching, abuse prevention, and network operations. If analytics or additional service providers are added later, this policy will be updated to describe them.</p>
+        <p>The site is hosted on Cloudflare Pages. Cloudflare may process request and security data as part of hosting, caching, abuse prevention, and network operations. The site also uses Google Analytics to understand aggregate site usage and improve the public converter pages.</p>
         <h2>Contact</h2>
         <p>Questions about this policy can be sent to <span class="email-text">${supportEmail}</span>.</p>`
     },
@@ -631,7 +1459,7 @@ function companyPages() {
         <p>Last updated: May 27, 2026.</p>
         <p>HexToDecimal.app does not require account cookies to use the public converter pages. The tools are available without signing in. Hosting and security providers may use limited technical cookies or similar technologies when needed to deliver, secure, or protect the site.</p>
         <h2>Current use</h2>
-        <p>The site does not currently use advertising cookies, behavioral retargeting cookies, or login session cookies for visitors using the public converters. If analytics, preferences, or additional services are added, this page will be updated to describe those technologies and their purpose.</p>
+        <p>The site uses Google Analytics to understand aggregate site usage and improve the converter pages. The site does not use advertising cookies, behavioral retargeting cookies, or login session cookies for visitors using the public converters.</p>
         <h2>Contact</h2>
         <p>Cookie questions can be sent to <span class="email-text">${supportEmail}</span>.</p>`
     }
@@ -646,10 +1474,10 @@ function renderCompanyPage(page) {
         ${page.body}
       </article>
     </main>`;
-  return layout({ title: page.title, description: page.description, canonical, body });
+  return layout({ title: page.title, description: page.description, canonical, body, robots: "noindex,follow" });
 }
 
-function layout({ title, description, canonical, body, page }) {
+function layout({ title, description, canonical, body, page, robots = "" }) {
   const schema = page ? renderSchema(page, canonical) : "";
   return `<!doctype html>
 <html lang="en-US">
@@ -658,6 +1486,7 @@ function layout({ title, description, canonical, body, page }) {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${escapeHtml(title)}</title>
   <meta name="description" content="${escapeHtml(description)}">
+  ${robots ? `<meta name="robots" content="${escapeHtml(robots)}">` : ""}
   <link rel="canonical" href="${canonical}">
   <meta property="og:type" content="website">
   <meta property="og:title" content="${escapeHtml(title)}">
@@ -669,6 +1498,15 @@ function layout({ title, description, canonical, body, page }) {
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
   <link rel="shortcut icon" href="/assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/assets/styles.css">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-G1XNHM5L3H"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-G1XNHM5L3H');
+  </script>
   ${schema}
 </head>
 <body>
@@ -757,36 +1595,14 @@ function renderSchema(page, canonical) {
     applicationCategory: "DeveloperApplication",
     operatingSystem: "Any",
     description: page.description,
+    isAccessibleForFree: true,
     offers: {
       "@type": "Offer",
       price: "0",
       priceCurrency: "USD"
     }
   };
-  const faq = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: [
-      {
-        "@type": "Question",
-        name: `Does this ${page.keyword} tool send my input to a server?`,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "No. The conversion logic runs in your browser after the page loads."
-        }
-      },
-      {
-        "@type": "Question",
-        name: `Can I use this ${page.keyword} page for homework or documentation?`,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Yes. Include the original value, the converted value, and the base labels so the direction is clear."
-        }
-      }
-    ]
-  };
-  return `<script type="application/ld+json">${JSON.stringify(data)}</script>
-  <script type="application/ld+json">${JSON.stringify(faq)}</script>`;
+  return `<script type="application/ld+json">${JSON.stringify(data)}</script>`;
 }
 
 function renderRobots() {
@@ -798,16 +1614,14 @@ Sitemap: ${siteUrl}/sitemap.xml
 }
 
 function renderSitemap() {
-  const urls = [
-    ...pages.map((page) => canonicalFor(page.slug)),
-    ...companyPages().map((page) => canonicalFor(page.slug))
-  ];
+  const urls = pages.map((page) => canonicalFor(page.slug));
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls
   .map(
     (url) => `  <url>
     <loc>${url}</loc>
+    <lastmod>${lastModified}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>${url === siteUrl + "/" ? "1.0" : "0.8"}</priority>
   </url>`
@@ -822,6 +1636,7 @@ function render404() {
     title: "Page Not Found",
     description: "The requested HexToDecimal.app page could not be found.",
     canonical: `${siteUrl}/404.html`,
+    robots: "noindex,follow",
     body: `
       <main id="main" class="main-shell">
         <article class="company-page article">

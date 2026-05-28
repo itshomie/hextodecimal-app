@@ -410,6 +410,40 @@ button.button.secondary:hover {
   padding-left: 22px;
 }
 
+.table-wrap {
+  width: 100%;
+  margin: 6px 0 22px;
+  overflow-x: auto;
+}
+
+.example-table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 15px;
+}
+
+.example-table th,
+.example-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.example-table th {
+  color: var(--ink);
+  background: var(--accent-soft);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.example-table tr:last-child td {
+  border-bottom: 0;
+}
+
 .article code,
 .inline-code {
   padding: 0.1em 0.32em;

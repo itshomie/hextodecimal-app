@@ -69,10 +69,17 @@
   };
 
   const normalizeHexBytes = (value) => {
-    const hex = value.replace(/0x/gi, "").replace(/[^0-9a-fA-F]/g, "");
-    if (!hex) return [];
+    const raw = value.trim();
+    if (!raw) return [];
+    const parts = raw
+      .split(/[\s,;]+/)
+      .map((part) => part.trim().replace(/^0x/i, ""));
+    if (!parts.length || parts.some((part) => !part)) throw new Error("Enter complete hexadecimal byte values.");
+    if (parts.some((part) => !/^[0-9a-fA-F]+$/.test(part))) {
+      throw new Error("Use only hexadecimal byte pairs, spaces, commas, semicolons, and optional 0x prefixes.");
+    }
+    const hex = parts.join("");
     if (hex.length % 2 !== 0) throw new Error("Hex text must contain an even number of digits.");
-    if (!/^[0-9a-fA-F]+$/.test(hex)) throw new Error("Use only hexadecimal digits 0-9 and A-F.");
     const bytes = [];
     for (let i = 0; i < hex.length; i += 2) {
       bytes.push(parseInt(hex.slice(i, i + 2), 16));
@@ -205,8 +212,12 @@
   copyButton?.addEventListener("click", async () => {
     const text = output?.textContent || "";
     if (!text.trim()) return;
-    await navigator.clipboard.writeText(text);
-    setStatus("Copied result to clipboard.");
+    try {
+      await navigator.clipboard.writeText(text);
+      setStatus("Copied result to clipboard.");
+    } catch {
+      setStatus("Copy failed. Select the result and copy it manually.", "error");
+    }
   });
 
   calculate();
