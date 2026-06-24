@@ -198,6 +198,39 @@ textarea {
   font-size: clamp(1.04rem, 1.6vw, 1.23rem);
 }
 
+.blog-hero {
+  max-width: 860px;
+  margin: 0 0 42px;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.blog-hero h1 {
+  margin: 0;
+  font-size: clamp(2.1rem, 4vw, 4.4rem);
+  line-height: 1.04;
+  letter-spacing: 0;
+}
+
+.blog-hero p {
+  max-width: 760px;
+  margin: 18px 0 0;
+  color: var(--muted);
+  font-size: clamp(1.02rem, 1.5vw, 1.2rem);
+}
+
+.blog-meta {
+  font-size: 14px !important;
+  font-weight: 700;
+}
+
 .hero-actions,
 .tool-actions {
   display: flex;
@@ -524,6 +557,10 @@ button.button.secondary:hover {
 .related-card span {
   color: var(--muted);
   font-size: 14px;
+}
+
+.blog-card {
+  min-height: 154px;
 }
 
 .company-page {

@@ -4,7 +4,8 @@ import path from "node:path";
 const root = process.cwd();
 const dist = path.join(root, "dist");
 const siteUrl = "https://hextodecimal.app";
-const minWords = 800;
+const minConverterWords = 800;
+const minBlogPostWords = 550;
 const maxArticleSimilarity = 0.55;
 const nonIndexablePaths = new Set([
   "/404.html",
@@ -15,12 +16,23 @@ const nonIndexablePaths = new Set([
   "/terms-of-use/",
   "/cookie-policy/"
 ]);
+const expectedRedirects = new Map([
+  ["/hex-to-decimal-converter", "/"],
+  ["/hex-to-decimal-converter/", "/"],
+  ["/binary-to-decimal-converter", "/binary-to-decimal/"],
+  ["/binary-to-decimal-converter/", "/binary-to-decimal/"],
+  ["/binary-to-hexadecimal", "/binary-to-hex/"],
+  ["/binary-to-hexadecimal/", "/binary-to-hex/"],
+  ["/hexadecimal-calculator", "/hex-calculator/"],
+  ["/hexadecimal-calculator/", "/hex-calculator/"]
+]);
 const failures = [];
 
 const htmlFiles = await collectHtml(dist);
 const existingPaths = new Set(htmlFiles.map(publicPathFor));
 const sitemapPaths = await readSitemapPaths();
 const robotsTxt = await readFile(path.join(dist, "robots.txt"), "utf8");
+const redirectsTxt = await readFile(path.join(dist, "_redirects"), "utf8").catch(() => "");
 
 if (!robotsTxt.includes(`Sitemap: ${siteUrl}/sitemap.xml`)) {
   failures.push("robots.txt: missing canonical sitemap URL");
@@ -33,11 +45,15 @@ const titles = new Map();
 const descriptions = new Map();
 const converterArticles = [];
 let converterCount = 0;
+let blogPostCount = 0;
+let blogIndexCount = 0;
 
 for (const file of htmlFiles) {
   const html = await readFile(file, "utf8");
   const pagePath = publicPathFor(file);
   const isConverterPage = /data-tool="/.test(html);
+  const isBlogPostPage = /data-page-type="blog-post"/.test(html);
+  const isBlogIndexPage = /data-page-type="blog-index"/.test(html);
   const visibleTextContent = visibleText(html);
   const words = wordCount(visibleTextContent);
   const title = getTagContent(html, "title");
@@ -67,7 +83,7 @@ for (const file of htmlFiles) {
     converterCount += 1;
     if (robots.includes("noindex")) failures.push(`${pagePath}: converter page is marked noindex`);
     if (!sitemapPaths.has(pagePath)) failures.push(`${pagePath}: converter page missing from sitemap.xml`);
-    if (words < minWords) failures.push(`${pagePath}: ${words} visible words, expected at least ${minWords}`);
+    if (words < minConverterWords) failures.push(`${pagePath}: ${words} visible words, expected at least ${minConverterWords}`);
     if (title.length < 35 || title.length > 65) {
       failures.push(`${pagePath}: title length ${title.length} should stay between 35 and 65 characters`);
     }
@@ -81,6 +97,21 @@ for (const file of htmlFiles) {
       failures.push(`${pagePath}: meta description does not sufficiently cover the H1/core keyword "${h1}"`);
     }
     converterArticles.push({ pagePath, text: visibleText(extractArticle(html)) });
+  } else if (isBlogPostPage) {
+    blogPostCount += 1;
+    if (robots.includes("noindex")) failures.push(`${pagePath}: blog post is marked noindex`);
+    if (!sitemapPaths.has(pagePath)) failures.push(`${pagePath}: blog post missing from sitemap.xml`);
+    if (words < minBlogPostWords) failures.push(`${pagePath}: ${words} visible words, expected at least ${minBlogPostWords}`);
+    if (title.length < 30 || title.length > 70) {
+      failures.push(`${pagePath}: blog title length ${title.length} should stay between 30 and 70 characters`);
+    }
+    if (description.length < 80 || description.length > 160) {
+      failures.push(`${pagePath}: blog meta description length ${description.length} should stay between 80 and 160 characters`);
+    }
+  } else if (isBlogIndexPage) {
+    blogIndexCount += 1;
+    if (robots.includes("noindex")) failures.push(`${pagePath}: blog index is marked noindex`);
+    if (!sitemapPaths.has(pagePath)) failures.push(`${pagePath}: blog index missing from sitemap.xml`);
   } else {
     if (!robots.includes("noindex")) failures.push(`${pagePath}: non-core page should be noindex,follow`);
     if (sitemapPaths.has(pagePath)) failures.push(`${pagePath}: non-core noindex page should not be in sitemap.xml`);
@@ -111,6 +142,17 @@ for (const sitemapPath of sitemapPaths) {
   if (nonIndexablePaths.has(sitemapPath)) failures.push(`sitemap.xml: includes non-indexable page ${sitemapPath}`);
 }
 
+const redirectRules = parseRedirects(redirectsTxt);
+for (const [source, target] of expectedRedirects) {
+  if (redirectRules.get(source) !== target) {
+    failures.push(`_redirects: missing 301 from ${source} to ${target}`);
+  }
+  const sourcePath = source.endsWith("/") ? source : `${source}/`;
+  if (existingPaths.has(sourcePath)) failures.push(`${sourcePath}: redirect source should not also generate HTML`);
+  if (sitemapPaths.has(sourcePath)) failures.push(`sitemap.xml: includes redirect source ${sourcePath}`);
+  if (!existingPaths.has(target)) failures.push(`_redirects: target ${target} for ${source} does not exist`);
+}
+
 for (let i = 0; i < converterArticles.length; i += 1) {
   for (let j = i + 1; j < converterArticles.length; j += 1) {
     const score = shingleSimilarity(converterArticles[i].text, converterArticles[j].text);
@@ -124,8 +166,9 @@ for (let i = 0; i < converterArticles.length; i += 1) {
   }
 }
 
-if (converterCount !== sitemapPaths.size) {
-  failures.push(`sitemap.xml: expected ${converterCount} indexable converter URLs, found ${sitemapPaths.size}`);
+const indexableCount = converterCount + blogPostCount + blogIndexCount;
+if (indexableCount !== sitemapPaths.size) {
+  failures.push(`sitemap.xml: expected ${indexableCount} indexable URLs, found ${sitemapPaths.size}`);
 }
 
 if (failures.length) {
@@ -134,7 +177,7 @@ if (failures.length) {
 }
 
 console.log(
-  `Checked ${htmlFiles.length} HTML files. ${converterCount} converter pages are indexable, non-core pages are noindex and excluded from sitemap.xml, internal links resolve, SEO tags are present, JSON-LD parses, and article similarity stays below ${maxArticleSimilarity}.`
+  `Checked ${htmlFiles.length} HTML files. ${converterCount} converter pages and ${blogPostCount} blog posts are indexable, redirects consolidate duplicate tools, non-core pages are noindex and excluded from sitemap.xml, internal links resolve, SEO tags are present, JSON-LD parses, and article similarity stays below ${maxArticleSimilarity}.`
 );
 
 async function collectHtml(directory) {
@@ -187,6 +230,17 @@ function getJsonLdBlocks(html) {
   return [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map((match) =>
     match[1].trim()
   );
+}
+
+function parseRedirects(value) {
+  const rules = new Map();
+  for (const line of value.split(/\r?\n/)) {
+    const clean = line.trim();
+    if (!clean || clean.startsWith("#")) continue;
+    const [source, target, status] = clean.split(/\s+/);
+    if (status === "301") rules.set(source, target);
+  }
+  return rules;
 }
 
 function extractArticle(html) {

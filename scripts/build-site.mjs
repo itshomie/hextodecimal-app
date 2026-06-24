@@ -4,7 +4,7 @@ import path from "node:path";
 const root = process.cwd();
 const dist = path.join(root, "dist");
 const siteUrl = "https://hextodecimal.app";
-const lastModified = "2026-05-28";
+const lastModified = "2026-06-24";
 const supportEmail = "<!--email_off-->support@hextodecimal.app<!--/email_off-->";
 
 const pages = [
@@ -126,6 +126,7 @@ const pages = [
   },
   {
     slug: "binary-to-hexadecimal",
+    redirectTo: "binary-to-hex",
     keyword: "binary to hexadecimal",
     title: "Binary to Hexadecimal Converter - Base 2 to Base 16",
     description:
@@ -207,6 +208,7 @@ const pages = [
   },
   {
     slug: "hexadecimal-calculator",
+    redirectTo: "hex-calculator",
     keyword: "hexadecimal calculator",
     title: "Hexadecimal Calculator - Precise Base 16 Arithmetic",
     description:
@@ -241,6 +243,7 @@ const pages = [
   },
   {
     slug: "hex-to-decimal-converter",
+    redirectTo: "",
     keyword: "hex to decimal converter",
     title: "Hex to Decimal Converter - Convert Base 16 to Base 10",
     description:
@@ -273,6 +276,7 @@ const pages = [
   },
   {
     slug: "binary-to-decimal-converter",
+    redirectTo: "binary-to-decimal",
     keyword: "binary to decimal converter",
     title: "Binary to Decimal Converter - Exact Base 2 to Base 10",
     description:
@@ -289,7 +293,11 @@ const pages = [
   }
 ];
 
-const navPages = pages.map((page) => ({
+const hasRedirect = (page) => Object.prototype.hasOwnProperty.call(page, "redirectTo");
+const indexablePages = pages.filter((page) => !hasRedirect(page));
+const redirectPages = pages.filter((page) => hasRedirect(page));
+
+const navPages = indexablePages.map((page) => ({
   href: page.slug ? `/${page.slug}/` : "/",
   label: titleCase(page.keyword),
   description: page.description
@@ -299,6 +307,176 @@ const relatedFor = (page) =>
   navPages
     .filter((item) => item.href !== (page.slug ? `/${page.slug}/` : "/"))
     .slice(0, 6);
+
+const blogPosts = [
+  {
+    slug: "blog/how-to-convert-binary-to-decimal",
+    keyword: "how to convert binary to decimal",
+    title: "How to Convert Binary to Decimal Without Guessing",
+    description:
+      "Learn how binary to decimal conversion works, why powers of two matter, and when to use a converter instead of doing the math by hand.",
+    updated: "2026-06-24",
+    summary:
+      "Binary looks awkward until you stop reading it like an ordinary number. This guide shows the place-value method and the small checks that prevent wrong answers.",
+    relatedTools: ["binary-to-decimal", "binary-converter", "decimal-to-binary"],
+    sections: [
+      {
+        heading: "Start by treating every digit as a switch",
+        paragraphs: [
+          "Binary is base 2, so every position can only be off or on. A 0 contributes nothing. A 1 contributes the value of that position. The trick is to read the positions from right to left instead of trying to read the full string as a normal decimal number.",
+          "Take 1010. The rightmost digit is the ones place, then 2, then 4, then 8. The active positions are 8 and 2, so 1010 equals 10. That is the whole idea. Longer values use the same rule, just with more powers of two."
+        ]
+      },
+      {
+        heading: "Use a place-value table when the number is longer",
+        paragraphs: [
+          "For short values, mental math is fine. For anything longer than four or five bits, a table keeps the work honest. Write the powers of two across the top, write the bits underneath, then add only the columns where the bit is 1."
+        ],
+        table: {
+          headers: ["Binary", "Active place values", "Decimal"],
+          rows: [
+            ["1010", "8 + 2", "10"],
+            ["11111111", "128 + 64 + 32 + 16 + 8 + 4 + 2 + 1", "255"],
+            ["100000000", "256", "256"]
+          ]
+        }
+      },
+      {
+        heading: "Watch for separators and prefixes",
+        paragraphs: [
+          "A value copied from code may include a 0b prefix, such as 0b1010. That prefix tells humans and programming languages that the number is binary. It is not part of the value, so the digits after 0b are what matter.",
+          "Spaces can mean two different things. In a lesson, 1111 0000 is often one byte written in groups for readability. In a batch converter, a space may separate two different inputs. If the value is meant to be one byte, remove the space before converting or use a tool that clearly supports grouped bytes."
+        ]
+      },
+      {
+        heading: "Do not ignore signed interpretation",
+        paragraphs: [
+          "Binary conversion by itself gives the mathematical value. For example, 11111111 is 255 as an unsigned byte. In signed 8-bit two's-complement, the same bit pattern can mean -1. Both answers can be correct in different contexts.",
+          "That is why hardware notes, protocol docs, and programming examples usually mention a width: 8-bit, 16-bit, 32-bit, or 64-bit. If the source document does not give a width, convert the raw value first, then avoid claiming a signed result."
+        ]
+      },
+      {
+        heading: "When a converter is the safer choice",
+        paragraphs: [
+          "Manual conversion is useful when you are learning. A converter is safer when the value is long, when you need several values at once, or when one wrong digit would break a register setting, packet example, or classroom answer key.",
+          "Use the binary to decimal converter when you need a direct answer. Use the broader binary converter when you want to compare the same input as decimal, hex, octal, and binary on one screen."
+        ]
+      }
+    ]
+  },
+  {
+    slug: "blog/why-ff-is-255",
+    keyword: "why FF is 255",
+    title: "Why FF Equals 255 in Hexadecimal",
+    description:
+      "A plain explanation of why hex FF converts to decimal 255, how byte values work, and why the same bits may also mean -1.",
+    updated: "2026-06-24",
+    summary:
+      "FF is one of the first hex values people memorize, but the reason matters. This guide breaks it down without skipping the byte context.",
+    relatedTools: ["", "hex-to-binary", "hex-converter", "hex-calculator"],
+    sections: [
+      {
+        heading: "Each F means fifteen, not a letter grade",
+        paragraphs: [
+          "Hexadecimal is base 16. It uses the ordinary digits 0 through 9, then A through F for the values 10 through 15. So F is the largest single hex digit, and its decimal value is 15.",
+          "The second part is place value. In FF, the right F is 15 ones. The left F is 15 sixteens. Add those together and you get 15 x 16 + 15, which equals 255."
+        ]
+      },
+      {
+        heading: "The byte view makes FF easier to remember",
+        paragraphs: [
+          "One byte has 8 bits. In binary, eight bits all turned on are written as 11111111. Split that into two groups of four bits and you get 1111 1111. Each group of 1111 maps to hex F, so the byte becomes FF.",
+          "The maximum unsigned value of 8 bits is 255 because the place values add up to 128 + 64 + 32 + 16 + 8 + 4 + 2 + 1. That same total is why FF appears so often in color values, masks, protocol examples, and low-level debugging."
+        ],
+        table: {
+          headers: ["Representation", "Value", "What it shows"],
+          rows: [
+            ["Hex FF", "255", "Two hex digits, both at their maximum"],
+            ["Binary 11111111", "255", "Eight active bits in one byte"],
+            ["Decimal 255", "FF", "The largest unsigned 8-bit value"]
+          ]
+        }
+      },
+      {
+        heading: "FF is also common in colors",
+        paragraphs: [
+          "In web color notation, a full six-digit color such as #FF0000 is made from three byte values: red, green, and blue. The first FF means the red channel is at 255. The next two pairs are 00 and 00, so green and blue are off.",
+          "That does not mean every FF is a color value. It only means color systems reuse the same byte range. When you see FF in a log, dump, address, checksum, or protocol table, the surrounding format tells you what kind of value it is."
+        ]
+      },
+      {
+        heading: "Why FF can sometimes mean -1",
+        paragraphs: [
+          "Unsigned FF is 255. Signed 8-bit FF is often -1 because of two's-complement interpretation. The visible characters are the same, but the rule used to interpret them is different.",
+          "This is the mistake that causes many confusing bug reports. If someone asks what FF means, the careful answer is: mathematically it converts to 255, but in an 8-bit signed field it may represent -1."
+        ]
+      },
+      {
+        heading: "Use the right converter for the question",
+        paragraphs: [
+          "Use a hex to decimal converter when the question is simply FF to decimal. Use a hex to binary converter when you need to inspect the bits. Use a hex converter when you want decimal, binary, octal, and possible text interpretation side by side.",
+          "The fastest check is still the same: F is 15, the left digit is worth sixteen times more than the right digit, and 15 x 16 + 15 equals 255."
+        ]
+      }
+    ]
+  },
+  {
+    slug: "blog/hex-to-ascii-explained",
+    keyword: "hex to ASCII explained",
+    title: "Hex to ASCII Explained with Byte Pair Examples",
+    description:
+      "Understand when hexadecimal bytes become readable ASCII text, why byte pairs matter, and how to spot invalid or non-text hex data.",
+    updated: "2026-06-24",
+    summary:
+      "Hex to ASCII only works cleanly when the input is byte data. This guide explains byte pairs, readable ranges, and common paste mistakes.",
+    relatedTools: ["hex-to-ascii", "binary-to-ascii", "hex-converter", "text-to-binary"],
+    sections: [
+      {
+        heading: "Hex text decoding starts with byte pairs",
+        paragraphs: [
+          "ASCII text is stored as bytes. A byte is 8 bits, and 8 bits are usually written as two hex digits. That is why 48 65 6C 6C 6F can decode to Hello: each pair is one byte, and each byte maps to a character.",
+          "If the input has an odd number of hex digits, one byte is incomplete. A single F is a valid hex number, but it is not a complete byte for ASCII decoding. That difference matters when you are switching between numeric conversion and text decoding."
+        ]
+      },
+      {
+        heading: "A small example is enough to see the pattern",
+        paragraphs: [
+          "The word Hello is a useful test because it contains common letters and no hidden control characters. Decode it pair by pair and the result is easy to verify."
+        ],
+        table: {
+          headers: ["Hex byte", "Decimal", "ASCII character"],
+          rows: [
+            ["48", "72", "H"],
+            ["65", "101", "e"],
+            ["6C", "108", "l"],
+            ["6F", "111", "o"]
+          ]
+        }
+      },
+      {
+        heading: "Not every hex value is text",
+        paragraphs: [
+          "Hex is used for many things: addresses, colors, checksums, hashes, encrypted bytes, packet dumps, and binary files. Some of those bytes may happen to form readable characters, but that does not prove the whole value is meant to be text.",
+          "If the decoded output contains replacement symbols, boxes, or many control characters, the source may be binary data instead of ASCII. In that case, numeric conversion or a format-specific parser is more useful than forcing text output."
+        ]
+      },
+      {
+        heading: "ASCII and UTF-8 are related but not identical",
+        paragraphs: [
+          "Plain ASCII covers values from 0 to 127. UTF-8 keeps those values the same, then uses multi-byte sequences for many other characters. That means ordinary English text usually decodes cleanly in both ASCII-style tools and UTF-8-aware tools.",
+          "Problems appear when the bytes include values above 7F. They may be valid UTF-8, extended legacy encoding, or non-text data. A converter can decode the bytes, but the source format still decides whether the result is meaningful."
+        ]
+      },
+      {
+        heading: "Clean the input before blaming the converter",
+        paragraphs: [
+          "Copied hex often includes prefixes, commas, brackets, quotes, or labels. A strict converter rejects that extra text because guessing can hide a real paste error. Remove the surrounding markup and keep only the byte pairs.",
+          "Use the hex to ASCII converter when the source is byte text. Use the hex converter when you want to compare numeric and text readings from the same input before deciding what the data represents."
+        ]
+      }
+    ]
+  }
+];
 
 const pageGuides = {
   "hex-to-decimal": {
@@ -1109,8 +1287,13 @@ async function main() {
   await cp(path.join(root, "src/assets/converter.js"), path.join(dist, "assets/converter.js"));
   await cp(path.join(root, "src/assets/favicon.svg"), path.join(dist, "assets/favicon.svg"));
 
-  for (const page of pages) {
+  for (const page of indexablePages) {
     await writePage(page.slug, renderConverterPage(page));
+  }
+
+  await writePage("blog", renderBlogIndex());
+  for (const post of blogPosts) {
+    await writePage(post.slug, renderBlogPost(post));
   }
 
   for (const page of companyPages()) {
@@ -1119,6 +1302,7 @@ async function main() {
 
   await writeFile(path.join(dist, "robots.txt"), renderRobots());
   await writeFile(path.join(dist, "sitemap.xml"), renderSitemap());
+  await writeFile(path.join(dist, "_redirects"), renderRedirects());
   await writeFile(path.join(dist, "404.html"), render404());
 }
 
@@ -1126,6 +1310,92 @@ async function writePage(slug, html) {
   const directory = slug ? path.join(dist, slug) : dist;
   await mkdir(directory, { recursive: true });
   await writeFile(path.join(directory, "index.html"), html);
+}
+
+function renderBlogIndex() {
+  const title = "Hex, Binary, and ASCII Conversion Guides";
+  const description =
+    "Practical guides for hexadecimal, binary, decimal, and ASCII conversion with examples that connect directly to the free tools on HexToDecimal.app.";
+  const canonical = `${siteUrl}/blog/`;
+  const body = `
+    <main id="main" class="main-shell" data-page-type="blog-index">
+      <section class="blog-hero">
+        <p class="eyebrow">Conversion guides</p>
+        <h1>${escapeHtml(title)}</h1>
+        <p>${escapeHtml(description)}</p>
+      </section>
+      <section class="related-grid" aria-label="Conversion guides">
+        ${blogPosts
+          .map(
+            (post) => `<a class="related-card blog-card" href="/${post.slug}/">
+              <strong>${escapeHtml(post.title)}</strong>
+              <span>${escapeHtml(post.summary)}</span>
+            </a>`
+          )
+          .join("")}
+      </section>
+      <section class="section-band" aria-labelledby="tool-shortcuts">
+        <h2 id="tool-shortcuts">Use a converter instead</h2>
+        <div class="related-grid">
+          ${navPages
+            .slice(0, 6)
+            .map(
+              (item) => `<a class="related-card" href="${item.href}"><strong>${escapeHtml(
+                item.label
+              )}</strong><span>${escapeHtml(item.description)}</span></a>`
+            )
+            .join("")}
+        </div>
+      </section>
+    </main>
+  `;
+  return layout({ title, description, canonical, body, schemaOverride: renderBlogIndexSchema(canonical, description) });
+}
+
+function renderBlogPost(post) {
+  const canonical = `${siteUrl}/${post.slug}/`;
+  const relatedTools = post.relatedTools
+    .map((slug) => indexablePages.find((page) => page.slug === slug))
+    .filter(Boolean);
+  const relatedPosts = blogPosts.filter((item) => item.slug !== post.slug).slice(0, 3);
+  const body = `
+    <main id="main" class="main-shell" data-page-type="blog-post">
+      <section class="blog-hero">
+        <p class="eyebrow">Conversion guide</p>
+        <h1>${escapeHtml(post.title)}</h1>
+        <p>${escapeHtml(post.summary)}</p>
+        <p class="blog-meta">Updated ${formatDate(post.updated)}</p>
+      </section>
+      <section class="content-layout" aria-label="${escapeHtml(post.keyword)} guide">
+        <article class="article blog-article">
+          ${renderBlogSections(post)}
+        </article>
+        <aside class="side-panel" aria-label="Related resources">
+          <div class="side-section">
+            <h2>Related tools</h2>
+            <ul class="link-list">
+              ${relatedTools
+                .map((page) => `<li><a href="${page.slug ? `/${page.slug}/` : "/"}">${escapeHtml(titleCase(page.keyword))}</a></li>`)
+                .join("")}
+            </ul>
+          </div>
+          <div class="side-section">
+            <h2>More guides</h2>
+            <ul class="link-list">
+              ${relatedPosts.map((item) => `<li><a href="/${item.slug}/">${escapeHtml(item.title)}</a></li>`).join("")}
+            </ul>
+          </div>
+        </aside>
+      </section>
+    </main>
+  `;
+  return layout({
+    title: post.title,
+    description: post.description,
+    canonical,
+    body,
+    schemaOverride: renderBlogPostSchema(post, canonical)
+  });
 }
 
 function renderConverterPage(page) {
@@ -1326,6 +1596,27 @@ function articleFor(page) {
   `;
 }
 
+function renderBlogSections(post) {
+  const toolLinks = post.relatedTools
+    .map((slug) => indexablePages.find((page) => page.slug === slug))
+    .filter(Boolean)
+    .map((page) => `<a href="${page.slug ? `/${page.slug}/` : "/"}">${escapeHtml(titleCase(page.keyword))}</a>`)
+    .join(", ");
+
+  return `${post.sections
+    .map(
+      (section) => `
+        <h2>${escapeHtml(section.heading)}</h2>
+        ${renderParagraphs(section.paragraphs || [])}
+        ${section.table ? renderContentTable(section.table) : ""}
+        ${section.list ? renderList(section.list) : ""}
+      `
+    )
+    .join("")}
+    <h2>Tools that match this guide</h2>
+    <p>When you want the answer without doing every step by hand, use ${toolLinks}. These pages keep the conversion task narrow, so the result is easier to check.</p>`;
+}
+
 function renderParagraphs(paragraphs) {
   return paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("");
 }
@@ -1354,6 +1645,22 @@ function renderExampleTable(rows) {
                 <td>${escapeHtml(note)}</td>
               </tr>`
             )
+            .join("")}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function renderContentTable(table) {
+  return `
+    <div class="table-wrap">
+      <table class="example-table">
+        <thead>
+          <tr>${table.headers.map((header) => `<th>${escapeHtml(header)}</th>`).join("")}</tr>
+        </thead>
+        <tbody>
+          ${table.rows
+            .map((row) => `<tr>${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join("")}</tr>`)
             .join("")}
         </tbody>
       </table>
@@ -1477,8 +1784,8 @@ function renderCompanyPage(page) {
   return layout({ title: page.title, description: page.description, canonical, body, robots: "noindex,follow" });
 }
 
-function layout({ title, description, canonical, body, page, robots = "" }) {
-  const schema = page ? renderSchema(page, canonical) : "";
+function layout({ title, description, canonical, body, page, robots = "", schemaOverride = "" }) {
+  const schema = page ? renderSchema(page, canonical) : schemaOverride;
   return `<!doctype html>
 <html lang="en-US">
 <head>
@@ -1529,6 +1836,7 @@ function header() {
         </a>
         <nav class="primary-nav" aria-label="Primary navigation">
           <a href="/">Hex to decimal</a>
+          <a href="/blog/">Guides</a>
           <details class="nav-menu">
             <summary>Converters</summary>
             <div class="nav-panel">
@@ -1571,6 +1879,7 @@ function footer() {
           </div>
           <div>
             <h2>Site</h2>
+            <a href="/blog/">Guides</a>
             <a href="/about/">About</a>
             <a href="/team-services/">Team services</a>
             <a href="/contact/">Contact</a>
@@ -1605,6 +1914,42 @@ function renderSchema(page, canonical) {
   return `<script type="application/ld+json">${JSON.stringify(data)}</script>`;
 }
 
+function renderBlogIndexSchema(canonical, description) {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    name: "HexToDecimal.app Guides",
+    url: canonical,
+    description,
+    publisher: {
+      "@type": "Organization",
+      name: "HexToDecimal.app"
+    }
+  };
+  return `<script type="application/ld+json">${JSON.stringify(data)}</script>`;
+}
+
+function renderBlogPostSchema(post, canonical) {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: post.title,
+    description: post.description,
+    datePublished: post.updated,
+    dateModified: post.updated,
+    mainEntityOfPage: canonical,
+    author: {
+      "@type": "Organization",
+      name: "HexToDecimal.app"
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "HexToDecimal.app"
+    }
+  };
+  return `<script type="application/ld+json">${JSON.stringify(data)}</script>`;
+}
+
 function renderRobots() {
   return `User-agent: *
 Allow: /
@@ -1614,7 +1959,11 @@ Sitemap: ${siteUrl}/sitemap.xml
 }
 
 function renderSitemap() {
-  const urls = pages.map((page) => canonicalFor(page.slug));
+  const urls = [
+    ...indexablePages.map((page) => canonicalFor(page.slug)),
+    `${siteUrl}/blog/`,
+    ...blogPosts.map((post) => `${siteUrl}/${post.slug}/`)
+  ];
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls
@@ -1629,6 +1978,17 @@ ${urls
   .join("\n")}
 </urlset>
 `;
+}
+
+function renderRedirects() {
+  return redirectPages
+    .flatMap((page) => {
+      const from = `/${page.slug}`;
+      const to = page.redirectTo ? `/${page.redirectTo}/` : "/";
+      return [`${from} ${to} 301`, `${from}/ ${to} 301`];
+    })
+    .join("\n")
+    .concat("\n");
 }
 
 function render404() {
@@ -1652,6 +2012,12 @@ function render404() {
 
 function canonicalFor(slug) {
   return slug ? `${siteUrl}/${slug}/` : `${siteUrl}/`;
+}
+
+function formatDate(value) {
+  return new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric" }).format(
+    new Date(`${value}T00:00:00Z`)
+  );
 }
 
 function titleCase(value) {
